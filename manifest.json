@@ -1,15 +1,41 @@
 {
   "manifest_version": 3,
-  "host_permissions": ["<all_urls>"],
-  "name": "SEO QuickScore",
-  "version": "1.0",
-  "description": "Analyze and score the SEO of the current webpage",
+  "name": "VelocitAI SEO Checker",
+  "version": "1.0.0",
+  "description": "Analyse et note le référencement de la page web actuelle",
   "action": {
     "default_popup": "popup/popup.html",
-    "default_icon": "icon.png"
+    "default_icon": {
+      "16": "images/icon16.png",
+      "48": "images/icon48.png",
+      "128": "images/icon128.png"
+    }
   },
-  "permissions": ["activeTab", "clipboardWrite", "scripting"],
   "icons": {
-    "48": "icon.png"
+    "16": "images/icon16.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "clipboardWrite",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["popup/analyze-page.js"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
   }
 }
