@@ -159,9 +159,10 @@ function updateSection(sectionId, data) {
  * @param {string} label - Libellé du résultat
  * @param {string} status - Statut (success, warning, error)
  * @param {string} details - Détails du résultat
+ * @param {string} tooltipText - Texte à afficher dans l'infobulle (optionnel)
  * @returns {HTMLElement} - Élément de résultat créé
  */
-function createResultItem(label, status, details = '') {
+function createResultItem(label, status, details = '', tooltipText = '') {
   const item = document.createElement('div');
   item.className = 'result-item';
   
@@ -177,12 +178,21 @@ function createResultItem(label, status, details = '') {
     statusIcon = '✗';
   }
   
+  // Créer la structure de base
   item.innerHTML = `
     <div class="result-label">
-      <span>${label}</span>
-      <span class="result-status ${statusClass}" title="${status}">${statusIcon}</span>
+      <div class="label-container">
+        <span>${label}</span>
+        ${tooltipText ? 
+          `<div class="tooltip-container">
+            <span class="tooltip-icon">i</span>
+            <div class="tooltip-content">${tooltipText}</div>
+          </div>` 
+          : ''}
+        <span class="result-status ${statusClass}" title="${status}">${statusIcon}</span>
+      </div>
+      ${details ? `<div class="result-details">${details}</div>` : ''}
     </div>
-    ${details ? `<div class="result-details">${details}</div>` : ''}
   `;
   
   return item;
@@ -381,20 +391,26 @@ function updateStructureSection(container, data) {
   // Titre de la page
   if (data.title) {
     const titleStatus = data.title.length >= 30 && data.title.length <= 60 ? 'success' : 'warning';
+    const titleTooltip = 'Le titre de la page est un élément important pour le référencement. Il doit être entre 30 et 60 caractères et contenir les mots-clés principaux.';
+    
     container.appendChild(createResultItem(
       `Titre de la page (${data.title.length} caractères)`,
       titleStatus,
-      `"${data.title.text}"`
+      `"${data.title.text}"`,
+      titleTooltip
     ));
   }
   
   // Balises H1
   if (data.h1) {
     const h1Status = data.h1.count === 1 ? 'success' : 'error';
+    const h1Tooltip = 'La balise H1 est le titre principal de la page. Il est recommandé d\'en avoir une seule par page pour une meilleure optimisation SEO.';
+    
     container.appendChild(createResultItem(
       `Balises H1 (${data.h1.count} trouvée${data.h1.count !== 1 ? 's' : ''})`,
       h1Status,
-      data.h1.count === 1 ? `"${data.h1.text}"` : 'Une seule balise H1 est recommandée par page.'
+      data.h1.count === 1 ? `"${data.h1.text}"` : 'Une seule balise H1 est recommandée par page.',
+      h1Tooltip
     ));
   }
   
@@ -405,23 +421,27 @@ function updateStructureSection(container, data) {
       .filter(([_, count]) => count > 0)
       .map(([tag, count]) => `${tag}: ${count}`)
       .join(', ');
+    
+    const headingsTooltip = 'Une structure hiérarchique des en-têtes (H1, H2, H3, etc.) est importante pour le référencement et l\'accessibilité. Utilisez-les pour structurer votre contenu de manière logique.';
       
     container.appendChild(createResultItem(
       'Structure des en-têtes',
       headingsStatus,
-      headingsText || 'Aucun en-tête trouvé.'
+      headingsText || 'Aucun en-tête trouvé.',
+      headingsTooltip
     ));
   }
   
   // Balise viewport
   if (data.viewport) {
     const viewportStatus = data.viewport.present ? 'success' : 'error';
+    const viewportTooltip = 'La balise viewport est essentielle pour un affichage correct sur mobile. Elle permet d\'adapter la largeur de la page à l\'écran du dispositif.';
+    
     container.appendChild(createResultItem(
       'Balise viewport pour mobile',
       viewportStatus,
-      data.viewport.present 
-        ? 'La balise viewport est correctement définie.' 
-        : 'La balise viewport est manquante. Essentiel pour le mobile.'
+      data.viewport.present ? 'Présente' : 'Manquante - Essentielle pour le mobile',
+      viewportTooltip
     ));
   }
 }
@@ -432,32 +452,52 @@ function updateSecuritySection(container, data) {
   container.innerHTML = '';
   
   // HTTPS
+  const httpsTooltip = 'Le protocole HTTPS est essentiel pour la sécurité des visiteurs et est un facteur de classement pour Google. Il crypte les données échangées entre le serveur et le navigateur.';
   container.appendChild(createResultItem(
     'Connexion sécurisée (HTTPS)',
     data.isHTTPS ? 'success' : 'error',
     data.isHTTPS 
       ? 'Votre site utilise une connexion sécurisée.' 
-      : 'Votre site n\'utilise pas HTTPS. Cela peut affecter votre référencement et la sécurité.'
+      : 'Votre site n\'utilise pas HTTPS. Cela peut affecter votre référencement et la sécurité.',
+    httpsTooltip
   ));
+  
+  // Protection XSS
+  if (data.xssProtection) {
+    const xssTooltip = 'La protection XSS (Cross-Site Scripting) est une mesure de sécurité critique qui aide à prévenir les attaques par injection de code malveillant. Activez cette protection dans les en-têtes HTTP de votre serveur.';
+    container.appendChild(createResultItem(
+      'Protection XSS',
+      data.xssProtection.enabled ? 'success' : 'warning',
+      data.xssProtection.enabled 
+        ? 'Protection XSS activée' 
+        : 'Protection XSS non activée ou mal configurée',
+      xssTooltip
+    ));
+  }
   
   // Balise canonique
   const canonicalStatus = data.canonical ? 'success' : 'warning';
+  const canonicalTooltip = 'La balise canonique aide les moteurs de recherche à comprendre quelle version d\'une URL afficher dans les résultats de recherche, ce qui est crucial pour éviter les problèmes de contenu dupliqué.';
+  
   container.appendChild(createResultItem(
-    'URL canonique',
+    'Balise canonique',
     canonicalStatus,
     data.canonical 
-      ? `Canonical: ${data.canonical}` 
-      : 'Aucune balise canonique trouvée. Recommandé pour éviter le contenu dupliqué.'
+      ? 'La balise canonique est correctement configurée.'
+      : 'Aucune balise canonique trouvée. Utile pour éviter le contenu dupliqué.',
+    canonicalTooltip
   ));
   
   // Balise meta robots
-  const robotsStatus = data.meta.robots ? 'success' : 'warning';
+  const robotsStatus = data.robots ? 'success' : 'info';
+  const robotsTooltip = 'Les directives pour les robots aident les moteurs de recherche à comprendre comment indexer votre contenu. Par exemple: noindex, nofollow, noarchive. Utilisez ces directives avec précaution car elles peuvent affecter la visibilité de votre site.';
   container.appendChild(createResultItem(
     'Directives pour les robots',
     robotsStatus,
-    data.meta.robots 
-      ? `Directives: ${data.meta.robots}` 
-      : 'Aucune directive robots spécifiée. Les moteurs de recherche indexeront normalement cette page.'
+    data.robots 
+      ? `Directives: ${data.robots}` 
+      : 'Aucune directive robots spécifiée. Les moteurs de recherche indexeront normalement cette page.',
+    robotsTooltip
   ));
 }
 
@@ -469,42 +509,69 @@ function updateContentSection(container, data) {
   // Meta description
   if (data.metaDescription) {
     const descStatus = data.metaDescription.length >= 120 && data.metaDescription.length <= 160 ? 'success' : 'warning';
+    const metaDescTooltip = 'La meta description est un résumé de la page qui apparaît dans les résultats de recherche. Idéalement entre 120 et 160 caractères, elle doit être attractive et contenir les mots-clés principaux.';
+    
     container.appendChild(createResultItem(
       `Meta description (${data.metaDescription.length} caractères)`,
       descStatus,
-      `"${data.metaDescription.text}"`
+      `"${data.metaDescription.text}"`,
+      metaDescTooltip
     ));
   }
   
   // Mots-clés
   const keywordsStatus = data.meta.keywords ? 'success' : 'warning';
+  const keywordsTooltip = 'Les balises meta keywords sont moins importantes pour le référencement moderne, mais peuvent encore être utilisées par certains moteurs de recherche. Utilisez des mots-clés pertinents séparés par des virgules.';
+  
   container.appendChild(createResultItem(
     'Mots-clés meta',
     keywordsStatus,
     data.meta.keywords 
       ? `Mots-clés: ${data.meta.keywords}` 
-      : 'Aucun mot-clé meta défini. Moins important pour le référencement moderne, mais toujours utile.'
+      : 'Aucun mot-clé meta défini. Moins important pour le référencement moderne, mais toujours utile.',
+    keywordsTooltip
   ));
   
   // Nombre de mots
   if (data.wordCount) {
     const wordCountStatus = data.wordCount >= 300 ? 'success' : 'warning';
+    const wordCountTooltip = 'Un contenu plus long (300+ mots) est généralement mieux référencé par les moteurs de recherche. Cela permet de couvrir plus de sujets en profondeur et d\'inclure une variété de mots-clés pertinents.';
+    
     container.appendChild(createResultItem(
       `Contenu textuel (${data.wordCount} mots)`,
       wordCountStatus,
       wordCountStatus === 'success' 
         ? 'Votre contenu a une bonne longueur.' 
-        : 'Un contenu plus long (300+ mots) est généralement mieux référencé.'
+        : 'Un contenu plus long (300+ mots) est généralement mieux référencé.',
+      wordCountTooltip
     ));
   }
   
   // Images
   if (data.images) {
     const imagesStatus = data.images.altTextRatio >= 80 ? 'success' : 'warning';
+    const imagesTooltip = 'Les images sont importantes pour le contenu visuel. Assurez-vous qu\'elles ont des attributs alt pour améliorer l\'accessibilité et le référencement.';
     container.appendChild(createResultItem(
       `Images (${data.images.total} au total, ${data.images.withAlt} avec texte alternatif)`,
       imagesStatus,
-      `Taux de balises alt: ${data.images.altTextRatio}%`
+      `Taux de balises alt: ${data.images.altTextRatio}%`,
+      imagesTooltip
+    ));
+  }
+  
+  // Images sans alt
+  if (data.images) {
+    const imagesWithoutAlt = data.images.withoutAlt;
+    const imagesStatus = imagesWithoutAlt === 0 ? 'success' : 'warning';
+    const altTextTooltip = 'L\'attribut alt décrit le contenu des images pour les moteurs de recherche et les utilisateurs de lecteurs d\'écran. Il est essentiel pour l\'accessibilité et améliore le référencement des images.';
+    
+    container.appendChild(createResultItem(
+      `Images sans attribut alt (${imagesWithoutAlt})`,
+      imagesStatus,
+      imagesWithoutAlt === 0 
+        ? 'Toutes les images ont un attribut alt.' 
+        : 'Certaines images manquent d\'attribut alt, ce qui est important pour l\'accessibilité et le référencement.',
+      altTextTooltip
     ));
   }
 }
@@ -516,42 +583,51 @@ function updatePerformanceSection(container, data) {
   
   // Liens
   if (data.links) {
-    const linksStatus = data.links.broken === 0 ? 'success' : 'error';
+    const linksTooltip = 'Les liens internes renforcent la structure de votre site, tandis que les liens externes de qualité peuvent améliorer votre crédibilité. Équilibrez les deux pour une stratégie de liens efficace.';
+    
     container.appendChild(createResultItem(
-      `Liens (${data.links.total} au total, ${data.links.broken || 0} cassés)`,
-      linksStatus,
-      linksStatus === 'success' 
-        ? 'Aucun lien cassé détecté.' 
-        : 'Certains liens semblent cassés. Vérifiez-les.'
+      `Liens (${data.links.internal} internes, ${data.links.external} externes)`,
+      'info',
+      'Analyse des liens de la page.',
+      linksTooltip
     ));
   }
   
   // Open Graph
   const ogStatus = data.meta.hasOpenGraph ? 'success' : 'warning';
+  const ogTooltip = 'Les balises Open Graph contrôlent comment votre page apparaît lorsqu\'elle est partagée sur les réseaux sociaux comme Facebook et LinkedIn. Elles améliorent le taux de clic en offrant un aperçu attrayant du contenu.';
+  
   container.appendChild(createResultItem(
     'Balises Open Graph',
     ogStatus,
     ogStatus === 'success' 
       ? 'Les balises Open Graph sont configurées.' 
-      : 'Les balises Open Graph sont recommandées pour un meilleur partage sur les réseaux sociaux.'
+      : 'Les balises Open Graph sont recommandées pour un meilleur partage sur les réseaux sociaux.',
+    ogTooltip
   ));
   
   // Twitter Cards
   const twitterStatus = data.meta.hasTwitterCard ? 'success' : 'info';
+  const twitterTooltip = 'Les cartes Twitter améliorent l\'affichage de vos liens sur Twitter. Elles permettent d\'afficher un aperçu riche avec une image, un titre et une description, ce qui peut augmenter l\'engagement.';
+  
   container.appendChild(createResultItem(
     'Cartes Twitter',
     twitterStatus,
     twitterStatus === 'success' 
       ? 'Les cartes Twitter sont configurées.' 
-      : 'Les cartes Twitter sont recommandées pour un meilleur affichage lors du partage sur Twitter.'
+      : 'Les cartes Twitter sont recommandées pour un meilleur affichage lors du partage sur Twitter.',
+    twitterTooltip
   ));
   
   // Images volumineuses
   if (data.images && data.images.largeImages > 0) {
+    const largeImagesTooltip = 'Les images volumineuses ralentissent le chargement de vos pages. Optimisez les images en les redimensionnant et en utilisant des formats modernes comme WebP ou AVIF pour améliorer les performances.';
+    
     container.appendChild(createResultItem(
       'Images volumineuses',
       'warning',
-      `${data.images.largeImages} image(s) volumineuse(s) détectée(s). Cela peut ralentir le chargement de la page.`
+      `${data.images.largeImages} image(s) volumineuse(s) détectée(s). Cela peut ralentir le chargement de la page.`,
+      largeImagesTooltip
     ));
   }
 }

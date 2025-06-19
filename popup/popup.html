@@ -96,8 +96,10 @@
       margin: 16px 0;
       border: 1px solid var(--color-border);
       border-radius: 8px;
-      overflow: hidden;
+      position: relative;
       box-shadow: var(--shadow-sm);
+      overflow: visible;
+      z-index: 1;
     }
 
     .section-header {
@@ -151,13 +153,104 @@
       transition: max-height 0.3s ease, opacity 0.2s ease;
     }
 
+    /* Styles pour l'infobulle */
+    .tooltip-container {
+      position: relative;
+      display: inline-flex;
+      margin-left: 4px;
+      vertical-align: middle;
+      z-index: 1;
+    }
+
+    .tooltip-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background-color: #4a6cf7;
+      color: white;
+      font-size: 11px;
+      font-weight: bold;
+      cursor: help;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+      line-height: 1;
+      padding-bottom: 1px;
+    }
+
+    .tooltip-icon:hover {
+      background-color: #3a5bd9;
+      transform: scale(1.1);
+    }
+
+    .tooltip-content {
+      visibility: hidden;
+      width: 250px;
+      background-color: #1a202c;
+      color: #f7fafc;
+      text-align: left;
+      border-radius: 6px;
+      padding: 12px 14px;
+      position: fixed;
+      z-index: 2147483647; /* Valeur max pour z-index */
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      font-size: 13px;
+      line-height: 1.5;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      pointer-events: none;
+      box-sizing: border-box;
+      /* Positionnement dynamique via JavaScript */
+      top: 0;
+      left: 0;
+    }
+
+    .tooltip-content::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      margin-left: -5px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: #1a202c transparent transparent transparent;
+    }
+
+    .tooltip-container:hover .tooltip-content {
+      visibility: visible;
+      opacity: 1;
+    }
+
     .section-content {
       padding: 12px 16px;
     }
 
     .result-item {
-      padding: 8px 0;
+      padding: 12px 0;
       border-bottom: 1px solid var(--color-border);
+      display: block;
+      margin-bottom: 8px;
+    }
+    
+    .result-label-container {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .result-label {
+      margin: 0;
+      width: 100%;
+    }
+    
+    .label-container {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
     }
 
     .result-item:last-child {
@@ -166,9 +259,8 @@
 
     .result-label {
       font-weight: 500;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      display: block;
+      width: 100%;
     }
 
     .result-status {
@@ -176,7 +268,9 @@
       width: 12px;
       height: 12px;
       border-radius: 50%;
-      margin-left: 8px;
+      margin-left: 6px;
+      margin-top: 4px;
+      vertical-align: middle;
     }
 
     .status-success { background-color: var(--color-success); }
@@ -189,6 +283,7 @@
       margin-top: 4px;
       padding-left: 4px;
       border-left: 2px solid var(--color-border);
+      margin-left: 4px;
     }
 
     .loading {
@@ -213,6 +308,38 @@
       to { transform: rotate(360deg); }
     }
   </style>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Positionner les infobulles au survol
+      document.addEventListener('mouseover', function(e) {
+        const tooltipIcon = e.target.closest('.tooltip-icon');
+        if (!tooltipIcon) return;
+        
+        const container = tooltipIcon.closest('.tooltip-container');
+        const tooltip = container.querySelector('.tooltip-content');
+        
+        // Positionner l'infobulle
+        const iconRect = tooltipIcon.getBoundingClientRect();
+        const tooltipRect = tooltip.getBoundingClientRect();
+        
+        // Position horizontale
+        let left = iconRect.left + (iconRect.width / 2) - (tooltipRect.width / 2);
+        
+        // Ajuster si on dépasse à gauche
+        if (left < 10) left = 10;
+        // Ajuster si on dépasse à droite
+        else if (left + tooltipRect.width > window.innerWidth - 10) {
+          left = window.innerWidth - tooltipRect.width - 10;
+        }
+        
+        // Position verticale (au-dessus de l'icône)
+        const top = iconRect.top - tooltipRect.height - 8;
+        
+        tooltip.style.left = `${left}px`;
+        tooltip.style.top = `${Math.max(10, top)}px`; // Au moins 10px du haut
+      });
+    });
+  </script>
 </head>
 <body>
   <h1>
