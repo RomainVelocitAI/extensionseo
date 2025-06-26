@@ -81,6 +81,9 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('[VelocitAI SEO][POPUP] Configuration des écouteurs d\'événements...');
     setupEventListeners();
     
+    // Configurer les nouveaux boutons d'actions
+    setupActionButtons();
+    
     console.log('[VelocitAI SEO][POPUP] Initialisation terminée avec succès');
   } catch (error) {
     console.error('[VelocitAI SEO][POPUP] Erreur lors de l\'initialisation:', error);
@@ -95,6 +98,73 @@ function setupEventListeners() {
   chrome.runtime.onMessage.addListener(handleBackgroundMessage);
   
   console.log('[VelocitAI SEO] Écouteurs d\'événements configurés');
+}
+
+/**
+ * Configure les boutons d'actions de la barre d'en-tête
+ */
+function setupActionButtons() {
+  console.log('[VelocitAI SEO][POPUP] Configuration des boutons d\'actions');
+  
+  // Bouton actualiser
+  const refreshBtn = document.getElementById('refresh-btn');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', handleRefreshClick);
+    console.log('[VelocitAI SEO][POPUP] Bouton actualiser configuré');
+  }
+  
+  // Bouton export
+  const exportBtn = document.getElementById('export-btn');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', handleExportClick);
+    console.log('[VelocitAI SEO][POPUP] Bouton export configuré');
+  }
+  
+  // Bouton historique (désactivé pour l'instant)
+  const historyBtn = document.getElementById('history-btn');
+  if (historyBtn) {
+    historyBtn.addEventListener('click', handleHistoryClick);
+    console.log('[VelocitAI SEO][POPUP] Bouton historique configuré (désactivé)');
+  }
+}
+
+/**
+ * Gestionnaire pour le bouton actualiser
+ */
+function handleRefreshClick() {
+  console.log('[VelocitAI SEO][POPUP] Bouton actualiser cliqué');
+  
+  const refreshBtn = document.getElementById('refresh-btn');
+  
+  // Empêcher les clics multiples
+  if (isAnalyzing) {
+    showActionFeedback('Une analyse est déjà en cours...', 'info');
+    return;
+  }
+  
+  // Animation du bouton
+  if (refreshBtn) {
+    refreshBtn.classList.add('rotating');
+  }
+  
+  // Feedback utilisateur
+  showActionFeedback('Actualisation de l\'analyse en cours...', 'info');
+  
+  // Lancer une nouvelle analyse
+  startAnalysis().finally(() => {
+    // Arrêter l'animation
+    if (refreshBtn) {
+      refreshBtn.classList.remove('rotating');
+    }
+  });
+}
+
+/**
+ * Gestionnaire pour le bouton historique (placeholder)
+ */
+function handleHistoryClick() {
+  console.log('[VelocitAI SEO][POPUP] Bouton historique cliqué');
+  showActionFeedback('Fonctionnalité d\'historique à venir dans une prochaine version !', 'info');
 }
 
 /**
@@ -317,6 +387,12 @@ function handleAnalysisResult(data, requestId = 'N/A') {
     }
     
     console.log(`[VelocitAI SEO][POPUP] Appel de displayResults avec les données (ID: ${requestId})`);
+    
+    // Sauvegarder les données pour l'export
+    if (typeof window.saveAnalysisResults === 'function') {
+      window.saveAnalysisResults(data);
+      console.log(`[VelocitAI SEO][POPUP] Données sauvegardées pour export (ID: ${requestId})`);
+    }
     
     // Appel direct sans setTimeout pour simplifier le débogage
     try {

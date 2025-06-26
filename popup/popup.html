@@ -307,6 +307,161 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+
+    /* Styles pour la nouvelle barre d'actions */
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .app-header h1 {
+      margin: 0;
+      flex: 1;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .action-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--color-border);
+      background: var(--color-bg);
+      color: var(--color-text);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      padding: 0;
+    }
+
+    .action-btn:hover:not(:disabled) {
+      background: var(--color-primary);
+      color: white;
+      border-color: var(--color-primary);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(74, 108, 247, 0.2);
+    }
+
+    .action-btn:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .action-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .action-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Animation de rotation pour le bouton refresh */
+    .action-btn.rotating {
+      animation: spin 1s linear infinite;
+    }
+
+    /* Messages de feedback */
+    .action-feedback {
+      margin: 8px 0;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .action-feedback.success {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #10b981;
+    }
+
+    .action-feedback.error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #ef4444;
+    }
+
+    .action-feedback.info {
+      background: #dbeafe;
+      color: #1e40af;
+      border: 1px solid #3b82f6;
+    }
+
+    /* Améliorations du loading indicator */
+    .loading-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--color-border);
+      border-top-color: var(--color-primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    .loading-steps {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 16px;
+      padding: 0 20px;
+    }
+
+    .loading-steps .step {
+      font-size: 11px;
+      color: var(--color-text-light);
+      text-align: center;
+      position: relative;
+      flex: 1;
+      padding: 4px;
+      transition: color 0.3s ease;
+    }
+
+    .loading-steps .step.active {
+      color: var(--color-primary);
+      font-weight: 500;
+    }
+
+    .loading-steps .step.completed {
+      color: var(--color-success);
+    }
+
+    .loading-steps .step::before {
+      content: '';
+      position: absolute;
+      top: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--color-border);
+      transition: background 0.3s ease;
+    }
+
+    .loading-steps .step.active::before {
+      background: var(--color-primary);
+      animation: pulse 1s infinite;
+    }
+
+    .loading-steps .step.completed::before {
+      background: var(--color-success);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
   </style>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -342,17 +497,46 @@
   </script>
 </head>
 <body>
-  <h1>
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px;">
-      <path d="M12 2L3 9L12 16L21 9L12 2Z" fill="#4a6cf7"/>
-      <path d="M3 10L12 17L21 10" stroke="#4a6cf7" stroke-width="2" stroke-linecap="round"/>
-      <path d="M3 14L12 21L21 14" stroke="#4a6cf7" stroke-width="2" stroke-linecap="round"/>
-    </svg>
-    VelocitAI SEO Checker
-  </h1>
+  <div class="app-header">
+    <h1>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px;">
+        <path d="M12 2L3 9L12 16L21 9L12 2Z" fill="#4a6cf7"/>
+        <path d="M3 10L12 17L21 10" stroke="#4a6cf7" stroke-width="2" stroke-linecap="round"/>
+        <path d="M3 14L12 21L21 14" stroke="#4a6cf7" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      VelocitAI SEO Checker
+    </h1>
+    
+    <div class="header-actions">
+      <button id="refresh-btn" class="action-btn" title="Actualiser l'analyse">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M13.65 2.35C12.24 0.94 10.37 0.16 8.5 0.16C4.31 0.16 0.84 3.36 0.5 7.5H2.5C2.82 4.47 5.41 2.16 8.5 2.16C9.86 2.16 11.14 2.71 12.12 3.69L9.5 6.31V10.5H13.69L11.07 7.88C12.47 6.48 12.47 4.25 11.07 2.85L13.65 2.35Z" fill="currentColor"/>
+        </svg>
+      </button>
+      
+      <button id="export-btn" class="action-btn" title="Exporter les résultats">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 0L6.59 1.41L11.17 6H0V8H11.17L6.59 12.59L8 14L16 8L8 0Z" fill="currentColor"/>
+        </svg>
+      </button>
+      
+      <button id="history-btn" class="action-btn" title="Voir l'historique" disabled>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 0C3.58 0 0 3.58 0 8C0 12.42 3.58 16 8 16C12.42 16 16 12.42 16 8C16 3.58 12.42 0 8 0ZM8 14C4.69 14 2 11.31 2 8C2 4.69 4.69 2 8 2C11.31 2 14 4.69 14 8C14 11.31 11.31 14 8 14ZM8.5 4H7V9L11.25 11.33L12 10.11L8.5 8.25V4Z" fill="currentColor"/>
+        </svg>
+      </button>
+    </div>
+  </div>
   
   <div id="loading-indicator" class="loading">
-    <p>Analyse de la page en cours...</p>
+    <div class="loading-spinner"></div>
+    <p id="loading-text">Analyse de la page en cours...</p>
+    <div class="loading-steps">
+      <div class="step active" data-step="1">Injection du script</div>
+      <div class="step" data-step="2">Analyse SEO</div>
+      <div class="step" data-step="3">Calcul du score</div>
+      <div class="step" data-step="4">Affichage</div>
+    </div>
   </div>
   
   <div id="results" style="display: none;">
@@ -366,6 +550,9 @@
       </div>
       <div class="score-label">Score SEO Global</div>
     </div>
+    
+    <!-- Messages de feedback pour les actions utilisateur -->
+    <div id="action-feedback" class="action-feedback" style="display: none;"></div>
     
     <div class="section">
       <div class="section-header" data-section="structure">
@@ -421,6 +608,7 @@
     <p>Veuillez réessayer ou rafraîchir la page.</p>
   </div>
   
+  <script src="export.js"></script>
   <script src="display.js"></script>
   <script src="popup.js"></script>
 </body>
